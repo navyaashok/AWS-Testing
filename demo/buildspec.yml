@@ -6,7 +6,6 @@ env:
     # 1) Pure registry hostname (used for login)
     REGISTRY_URI: 998936067548.dkr.ecr.us-east-1.amazonaws.com
     # 2) Full repository path (registry + repo name) used for tagging/pushing
-    REPOSITORY_URI: 998936067548.dkr.ecr.us-east-1.amazonaws.com/myecs-app
     # 3) Container name ECS or CodeDeploy will look for
     DOCKER_CONTAINER_NAME: spring-demo-ecr
 
