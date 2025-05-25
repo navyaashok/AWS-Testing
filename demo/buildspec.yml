@@ -1,40 +1,50 @@
 version: 0.2
 
+# ---------- parameters you’ll reuse ----------
 env:
   variables:
+    # 1) Pure registry hostname (used for login)
+    REGISTRY_URI: 998936067548.dkr.ecr.us-east-1.amazonaws.com
+    # 2) Full repository path (registry + repo name) used for tagging/pushing
     REPOSITORY_URI: 998936067548.dkr.ecr.us-east-1.amazonaws.com/myecs-app
+    # 3) Container name ECS or CodeDeploy will look for
     DOCKER_CONTAINER_NAME: spring-demo-ecr
 
+# ---------- build phases ----------
 phases:
   pre_build:
     commands:
-      - echo Logging in to Amazon ECR...
+      - echo "🔐  Logging in to Amazon ECR..."
       - aws --version
-      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $REPOSITORY_URI
+      # Login to the *registry*, not the repo URI
+      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $REGISTRY_URI
+      # Generate an image tag that matches this CodeBuild run
       - IMAGE_TAG=build-$(echo $CODEBUILD_BUILD_ID | awk -F":" '{print $2}')
-      - echo Image tag will be: $IMAGE_TAG
+      - echo "🌟  Image tag set to: $IMAGE_TAG"
 
   build:
     commands:
-      - echo Build started on `date`
-      - echo Building the JAR file...
-      - mvn clean install
-      - echo Building the Docker image...
+      - echo "⚙️  Build started on $(date)"
+      - echo "📦  Compiling the JAR..."
+      - mvn -B clean install            # -B = batch-mode → quieter logs
+      - echo "🐳  Building Docker image..."
       - docker build -t $REPOSITORY_URI:latest .
-      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
+      - docker tag  $REPOSITORY_URI:latest  $REPOSITORY_URI:$IMAGE_TAG
 
   post_build:
     commands:
-      - echo Build completed on `date`
-      - echo Pushing Docker images to ECR...
+      - echo "🚀  Pushing images to ECR..."
       - docker push $REPOSITORY_URI:latest
       - docker push $REPOSITORY_URI:$IMAGE_TAG
-      - echo Writing imagedefinitions.json file...
-      - printf '[{"name":"%s","imageUri":"%s"}]' $DOCKER_CONTAINER_NAME $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
-      - echo Done. Contents of imagedefinitions.json:
+      - echo "📝  Writing imagedefinitions.json for deployment..."
+      - printf '[{"name":"%s","imageUri":"%s"}]' \
+          $DOCKER_CONTAINER_NAME $REPOSITORY_URI:$IMAGE_TAG \
+          > imagedefinitions.json
+      - echo "✨  Contents of imagedefinitions.json:"
       - cat imagedefinitions.json
 
+# ---------- artifacts to hand off ----------
 artifacts:
   files:
     - imagedefinitions.json
-    - target/springboot-aws-deploy.jar
+    - target/springboot-aws-deploy.jar     # adjust if your JAR name differs
