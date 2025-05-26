@@ -46,7 +46,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>3.5.0</version>
                 <configuration>
-                    <mainClass>com.awstesting.demo.DemoApplication</mainClass>
+                    <mainClass>demo.DemoApplication</mainClass>
                 </configuration>
             </plugin>
         </plugins>
