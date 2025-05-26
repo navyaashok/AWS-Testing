@@ -1,27 +1,33 @@
 version: 0.2
 
+env:
+  variables:
+    REPOSITORY_URI: 998936067548.dkr.ecr.us-east-1.amazonaws.com/myecs-app
+
 phases:
   pre_build:
     commands:
       - echo Logging in to Amazon ECR...
       - aws --version
-      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 998936067548.dkr.ecr.us-east-1.amazonaws.com
-      - export REPOSITORY_URI=998936067548.dkr.ecr.us-east-1.amazonaws.com/myecs-app
-      - export IMAGE_TAG=build-$(echo $CODEBUILD_BUILD_ID | awk -F":" '{print $2}')
+      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $REPOSITORY_URI
+      - IMAGE_TAG=build-$(echo $CODEBUILD_BUILD_ID | awk -F":" '{print $2}')
+      - echo $IMAGE_TAG > imageTag.txt
   build:
     commands:
       - echo Build started on `date`
       - mvn clean install
+      - IMAGE_TAG=$(cat imageTag.txt)
       - echo Building the Docker image...
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
   post_build:
     commands:
+      - IMAGE_TAG=$(cat imageTag.txt)
       - echo Build completed on `date`
       - echo pushing to repo...
       - docker push $REPOSITORY_URI:latest
       - docker push $REPOSITORY_URI:$IMAGE_TAG
-      - export DOCKER_CONTAINER_NAME=spring-demo-ecr
+      - DOCKER_CONTAINER_NAME=spring-demo-ecr
       - printf '[{"name":"%s","imageUri":"%s"}]' $DOCKER_CONTAINER_NAME $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
 artifacts:
   files:
