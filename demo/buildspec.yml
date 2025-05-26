@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    REPOSITORY_URI: 998936067548.dkr.ecr.us-east-1.amazonaws.com/myecs-app22
+    REPOSITORY_URI: 998936067548.dkr.ecr.us-east-1.amazonaws.com/myecs-app
 
 phases:
   pre_build:
