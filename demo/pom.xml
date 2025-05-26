@@ -55,5 +55,4 @@
 		</plugins>
 		<finalName>AWS-Deploy</finalName>
 	</build>
-
 </project>
