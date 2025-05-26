@@ -5,6 +5,12 @@ env:
     REPOSITORY_URI: 998936067548.dkr.ecr.us-east-1.amazonaws.com/myecs-app
 
 phases:
+  install:
+    runtime-versions:
+      java: corretto17
+    commands:
+      - echo Using Java 17 environment...
+
   pre_build:
     commands:
       - echo Logging in to Amazon ECR...
@@ -12,12 +18,14 @@ phases:
       - echo Setting IMAGE_TAG...
       - IMAGE_TAG=build-$(echo $CODEBUILD_BUILD_ID | cut -d':' -f2)
       - echo $IMAGE_TAG > imageTag.txt
+
   build:
     commands:
       - IMAGE_TAG=$(cat imageTag.txt)
       - mvn clean install
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
+
   post_build:
     commands:
       - IMAGE_TAG=$(cat imageTag.txt)
